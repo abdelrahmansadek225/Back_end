@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database import SessionLocal, User
+from database import get_db
+from model import User
 from pydantic import BaseModel, EmailStr
 import bcrypt
 import jwt
@@ -9,15 +10,7 @@ SECRET_KEY = "Men_In_Black"
 
 router = APIRouter()
 
-# Dependency to get DB session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-# Request Models
+# ✅ Request Models
 class RegisterRequest(BaseModel):
     username: str
     email: EmailStr
@@ -28,18 +21,18 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
-# Password Hashing
+# ✅ Password Hashing
 def hash_password(password: str):
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 def verify_password(plain_password, hashed_password):
     return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
 
-# JWT Token Generation
+# ✅ JWT Token Generation
 def create_jwt_token(user_id: int):
     return jwt.encode({"user_id": user_id}, SECRET_KEY, algorithm="HS256")
 
-# Register Endpoint
+# ✅ Register Endpoint
 @router.post("/register")
 def register(user: RegisterRequest, db: Session = Depends(get_db)):
     if user.password != user.confirm_password:
@@ -54,7 +47,7 @@ def register(user: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "User registered successfully"}
 
-# Login Endpoint
+# ✅ Login Endpoint
 @router.post("/login")
 def login(user: LoginRequest, db: Session = Depends(get_db)):
     user_db = db.query(User).filter(User.username == user.username).first()
